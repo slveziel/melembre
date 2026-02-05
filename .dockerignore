@@ -1,0 +1,16 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+node_modules
+npm-debug.log
+.env
+.env.production
+storage/logs/*
+!storage/logs/.gitignore
+*.log
+.editorconfig
+*.md
+tests/
+.phpunit.cache
