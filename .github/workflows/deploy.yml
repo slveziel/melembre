@@ -1,0 +1,53 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: samus-486501
+  REGION: us-central1
+  SERVICE_NAME: melembre
+  CLOUD_SQL_CONNECTION: samus-486501:us-central1:samus-db
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --add-cloudsql-instances ${{ env.CLOUD_SQL_CONNECTION }} \
+            --set-env-vars "APP_ENV=production" \
+            --set-env-vars "APP_DEBUG=false" \
+            --set-env-vars "APP_KEY=${{ secrets.APP_KEY }}" \
+            --set-env-vars "DB_CONNECTION=mysql" \
+            --set-env-vars "DB_HOST=/cloudsql/${{ env.CLOUD_SQL_CONNECTION }}" \
+            --set-env-vars "DB_PORT=3306" \
+            --set-env-vars "DB_DATABASE=${{ secrets.DB_NAME }}" \
+            --set-env-vars "DB_USERNAME=${{ secrets.DB_USER }}" \
+            --set-env-vars "DB_PASSWORD=${{ secrets.DB_PASS }}"

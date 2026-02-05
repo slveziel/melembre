@@ -8,7 +8,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM php:8.3-apline
+FROM php:8.3-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
