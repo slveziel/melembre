@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('app')
 
 @section('title', 'Esqueci minha senha - melembre')
 
@@ -11,15 +11,16 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
+
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
 
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" required value="{{ old('email') }}" autofocus>
-            @error('email')
-                <span style="color: red;">{{ $message }}</span>
-            @enderror
+            <input type="email" id="email" name="email" required>
         </div>
 
         <button type="submit" class="btn" style="width: 100%;">Enviar link de redefinição</button>

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('app')
 
 @section('title', 'Editar Anotação - melembre')
 
@@ -6,7 +6,11 @@
 <div class="card">
     <h1>Editar Anotação</h1>
 
-    <form method="POST" action="{{ route('notes.update', $note) }}" id="noteForm">
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
+
+    <form method="POST" action="{{ route('notes.update', $note) }}">
         @csrf
         @method('PUT')
 
@@ -16,33 +20,9 @@
         </div>
 
         <div class="form-group">
-            <label for="content">Conteúdo</label>
-            <textarea id="content" name="content">{{ old('content', $note->content) }}</textarea>
-        </div>
-
-        <!-- Voice Recording -->
-        <div class="form-group">
-            <label>Nota de Voz (opcional)</label>
-            <div class="voice-recorder">
-                <button type="button" id="recordBtn" class="voice-btn" style="background: #6c757d;">
-                    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85s-.9.36-.98.85C6.52 17.2 8.47 19 12 19s4.52-1.8 4.93-4.15c.08-.49.49-.85.98-.85zM12 19c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-                </button>
-                <div class="voice-status" id="voiceStatus">Clique para gravar</div>
-                <div class="voice-player" id="voicePlayer" style="display: none;">
-                    <audio id="audioPreview" controls></audio>
-                    <div class="voice-actions">
-                        <button type="button" class="btn btn-danger" id="deleteVoice">Excluir</button>
-                    </div>
-                </div>
-                <input type="hidden" name="voice_note" id="voiceNoteInput" value="{{ $note->voice_note }}">
-                @if($note->voice_note)
-                    <div class="voice-player" id="existingVoice">
-                        <audio controls src="{{ asset('storage/voice/' . $note->voice_note) }}"></audio>
-                        <div class="voice-actions">
-                            <button type="button" class="btn btn-danger" id="deleteExistingVoice">Excluir gravação existente</button>
-                        </div>
-                    </div>
-                @endif
+            <label>Conteúdo (Markdown)</label>
+            <div class="editor-container">
+                <textarea id="markdown-editor" name="content">{{ old('content', $note->content) }}</textarea>
             </div>
         </div>
 
@@ -53,99 +33,16 @@
     </form>
 </div>
 
-@push('scripts')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <script>
-let mediaRecorder;
-let audioChunks = [];
-let isRecording = false;
-let audioBlob = null;
-
-const recordBtn = document.getElementById('recordBtn');
-const voiceStatus = document.getElementById('voiceStatus');
-const voicePlayer = document.getElementById('voicePlayer');
-const audioPreview = document.getElementById('audioPreview');
-const deleteVoice = document.getElementById('deleteVoice');
-const voiceNoteInput = document.getElementById('voiceNoteInput');
-const existingVoice = document.getElementById('existingVoice');
-const deleteExistingVoice = document.getElementById('deleteExistingVoice');
-
-const noteId = {{ $note->id }};
-
-recordBtn.addEventListener('click', async () => {
-    if (!isRecording) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                audioPreview.src = audioUrl;
-                voicePlayer.style.display = 'block';
-                voiceStatus.textContent = 'Gravação salva! Clique para regravar';
-            };
-
-            mediaRecorder.start();
-            isRecording = true;
-            recordBtn.classList.add('recording');
-            recordBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-        } catch (err) {
-            voiceStatus.textContent = 'Erro: Permissão de microfone negada';
-        }
-    } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        recordBtn.classList.remove('recording');
-        recordBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85s-.9.36-.98.85C6.52 17.2 8.47 19 12 19s4.52-1.8 4.93-4.15c.08-.49.49-.85.98-.85zM12 19c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>';
-    }
-});
-
-deleteVoice.addEventListener('click', () => {
-    audioBlob = null;
-    voicePlayer.style.display = 'none';
-    voiceNoteInput.value = '';
-    voiceStatus.textContent = 'Clique para gravar';
-});
-
-if (deleteExistingVoice) {
-    deleteExistingVoice.addEventListener('click', () => {
-        voiceNoteInput.value = '';
-        existingVoice.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+        new EasyMDE({ 
+            element: document.getElementById('markdown-editor'),
+            spellChecker: false,
+            status: false,
+            forceSync: true
+        });
     });
-}
-
-document.getElementById('noteForm').addEventListener('submit', async (e) => {
-    if (audioBlob) {
-        e.preventDefault();
-
-        const formData = new FormData();
-        formData.append('voice', audioBlob, 'recording.webm');
-
-        try {
-            const response = await fetch('/notes/' + noteId + '/voice', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                },
-                body: formData
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                voiceNoteInput.value = data.filename;
-                e.target.submit();
-            }
-        } catch (err) {
-            console.error('Error uploading voice:', err);
-            alert('Erro ao enviar áudio');
-        }
-    }
-});
 </script>
-@endpush
 @endsection

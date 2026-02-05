@@ -1,62 +1,37 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Notes from './pages/Notes';
 import NoteForm from './pages/NoteForm';
-import Navbar from './components/Navbar';
-
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div className="loading">Carregando...</div>;
-  }
-
-  return user ? children : <Navigate to="/login" />;
-}
+import './app.css';
 
 function App() {
-  return (
-    <div className="app">
-      <Navbar />
-      <main className="container">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route
-            path="/notes"
-            element={
-              <PrivateRoute>
-                <Notes />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/notes/new"
-            element={
-              <PrivateRoute>
-                <NoteForm />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/notes/:id/edit"
-            element={
-              <PrivateRoute>
-                <NoteForm />
-              </PrivateRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/notes" />} />
-        </Routes>
-      </main>
-    </div>
-  );
+    return (
+        <AuthProvider>
+            <BrowserRouter>
+                <div className="app">
+                    <Navbar />
+                    <main className="main-content">
+                        <Routes>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password/:token" element={<ResetPassword />} />
+                            <Route path="/notes/create" element={<NoteForm />} />
+                            <Route path="/notes/:id/edit" element={<NoteForm />} />
+                            <Route path="/notes" element={<Notes />} />
+                            <Route path="/" element={<Notes />} />
+                        </Routes>
+                    </main>
+                </div>
+            </BrowserRouter>
+        </AuthProvider>
+    );
 }
 
 export default App;

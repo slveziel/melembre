@@ -1,10 +1,14 @@
-@extends('layouts.app')
+@extends('app')
 
 @section('title', 'Login - melembre')
 
 @section('content')
 <div class="auth-box card">
     <h1>Entrar</h1>
+
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
@@ -18,12 +22,6 @@
             <label for="password">Senha</label>
             <input type="password" id="password" name="password" required>
         </div>
-
-        @if($errors->any())
-            <div class="alert alert-danger">
-                {{ $errors->first() }}
-            </div>
-        @endif
 
         <button type="submit" class="btn" style="width: 100%;">Entrar</button>
     </form>

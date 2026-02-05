@@ -1,102 +1,102 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
 function ResetPassword() {
-  const { token } = useParams();
-  const [email, setEmail] = useState(new URLSearchParams(window.location.search).get('email') || '');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+    const { token } = useParams();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [passwordConfirm, setPasswordConfirm] = useState('');
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
 
-    if (password !== passwordConfirmation) {
-      setError('As senhas não coincidem');
-      return;
-    }
+        if (password !== passwordConfirm) {
+            setError('As senhas não coincidem');
+            return;
+        }
 
-    setLoading(true);
+        if (password.length < 6) {
+            setError('A senha deve ter pelo menos 6 caracteres');
+            return;
+        }
 
-    try {
-      await api.post('/reset-password', {
-        token,
-        email,
-        password,
-        password_confirmation: passwordConfirmation
-      });
-      setSuccess('Senha redefinida com sucesso!');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (err) {
-      const errors = err.response?.data?.errors;
-      if (errors) {
-        const firstError = Object.values(errors)[0][0];
-        setError(firstError);
-      } else {
-        setError(err.response?.data?.message || 'Erro ao redefinir senha');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
 
-  return (
-    <div className="auth-box card">
-      <h1>Redefinir senha</h1>
+        try {
+            const res = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, email, password, password_confirmation: passwordConfirm })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Erro ao redefinir senha');
+            setMessage(data.message || 'Senha redefinida com sucesso!');
+            setTimeout(() => navigate('/login'), 2000);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      {success && <div className="alert alert-success">{success}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+    return (
+        <div className="auth-container">
+            <div className="card">
+                <h1 className="auth-title">Redefinir senha</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input type="hidden" name="token" value={token} />
+                {message && <div className="alert alert-success">{message}</div>}
+                {error && <div className="alert alert-danger">{error}</div>}
 
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            readOnly={!!email}
-            style={{ background: email ? '#f5f5f5' : undefined }}
-          />
+                <form onSubmit={handleSubmit}>
+                    <input type="hidden" name="token" value={token} />
+
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            style={{ background: '#f5f5f5' }}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password">Nova senha</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password_confirmation">Confirmar nova senha</label>
+                        <input
+                            type="password"
+                            id="password_confirmation"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn btn-block" disabled={loading}>
+                        {loading ? 'Redefinindo...' : 'Redefinir senha'}
+                    </button>
+                </form>
+            </div>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Nova senha</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password_confirmation">Confirmar nova senha</label>
-          <input
-            type="password"
-            id="password_confirmation"
-            value={passwordConfirmation}
-            onChange={(e) => setPasswordConfirmation(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
-          {loading ? 'Redefinindo...' : 'Redefinir senha'}
-        </button>
-      </form>
-    </div>
-  );
+    );
 }
 
 export default ResetPassword;

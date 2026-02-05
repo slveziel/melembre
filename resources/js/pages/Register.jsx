@@ -1,106 +1,107 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
-  const navigate = useNavigate();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [passwordConfirm, setPasswordConfirm] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { register } = useAuth();
+    const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
 
-    if (password !== passwordConfirmation) {
-      setError('As senhas não coincidem');
-      return;
-    }
+        if (password !== passwordConfirm) {
+            setError('As senhas não coincidem');
+            return;
+        }
 
-    setLoading(true);
+        if (password.length < 6) {
+            setError('A senha deve ter pelo menos 6 caracteres');
+            return;
+        }
 
-    try {
-      await register(name, email, password, passwordConfirmation);
-      navigate('/notes');
-    } catch (err) {
-      const errors = err.response?.data?.errors;
-      if (errors) {
-        const firstError = Object.values(errors)[0][0];
-        setError(firstError);
-      } else {
-        setError(err.response?.data?.message || 'Erro ao criar conta');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
 
-  return (
-    <div className="auth-box card">
-      <h1>Criar conta</h1>
+        try {
+            await register(name, email, password);
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      {error && <div className="alert alert-danger">{error}</div>}
+    return (
+        <div className="auth-container">
+            <div className="card">
+                <h1 className="auth-title">Criar conta</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Nome</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+                {error && <div className="alert alert-danger">{error}</div>}
+
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label htmlFor="name">Nome</label>
+                        <input
+                            type="text"
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password">Senha</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="password_confirmation">Confirmar Senha</label>
+                        <input
+                            type="password"
+                            id="password_confirmation"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn btn-block" disabled={loading}>
+                        {loading ? 'Cadastrando...' : 'Cadastrar'}
+                    </button>
+                </form>
+
+                <div className="auth-links">
+                    <p>Já tem conta? <Link to="/login">Entrar</Link></p>
+                </div>
+            </div>
         </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Senha</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password_confirmation">Confirmar Senha</label>
-          <input
-            type="password"
-            id="password_confirmation"
-            value={passwordConfirmation}
-            onChange={(e) => setPasswordConfirmation(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
-          {loading ? 'Criando...' : 'Cadastrar'}
-        </button>
-      </form>
-
-      <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-        Já tem conta? <Link to="/login" className="link">Entrar</Link>
-      </p>
-    </div>
-  );
+    );
 }
 
 export default Register;

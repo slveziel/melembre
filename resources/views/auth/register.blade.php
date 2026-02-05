@@ -1,10 +1,14 @@
-@extends('layouts.app')
+@extends('app')
 
 @section('title', 'Cadastro - melembre')
 
 @section('content')
 <div class="auth-box card">
     <h1>Criar conta</h1>
+
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
@@ -17,9 +21,6 @@
         <div class="form-group">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" required value="{{ old('email') }}">
-            @error('email')
-                <span style="color: red;">{{ $message }}</span>
-            @enderror
         </div>
 
         <div class="form-group">

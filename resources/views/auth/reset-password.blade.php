@@ -1,10 +1,14 @@
-@extends('layouts.app')
+@extends('app')
 
 @section('title', 'Redefinir senha - melembre')
 
 @section('content')
 <div class="auth-box card">
     <h1>Redefinir senha</h1>
+
+    @if($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
 
     <form method="POST" action="{{ route('password.update') }}">
         @csrf
@@ -13,18 +17,12 @@
 
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" required value="{{ old('email') }}" readonly style="background: #f5f5f5;">
-            @error('email')
-                <span style="color: red;">{{ $message }}</span>
-            @enderror
+            <input type="email" id="email" name="email" value="{{ $email ?? old('email') }}" required readonly style="background: #f5f5f5;">
         </div>
 
         <div class="form-group">
             <label for="password">Nova senha</label>
             <input type="password" id="password" name="password" required minlength="6">
-            @error('password')
-                <span style="color: red;">{{ $message }}</span>
-            @enderror
         </div>
 
         <div class="form-group">

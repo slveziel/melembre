@@ -1,62 +1,68 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
 
 function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setMessage('');
+        setLoading(true);
 
-    try {
-      await api.post('/forgot-password', { email });
-      setSuccess('Link de redefinição enviado para seu email!');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao enviar link');
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            const res = await fetch('/api/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Erro ao enviar email');
+            setMessage(data.message || 'Link de redefinição enviado para seu email!');
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="auth-box card">
-      <h1>Esqueci minha senha</h1>
-      <p style={{ marginBottom: '1rem', color: '#666' }}>
-        Digite seu email e enviaremos um link para redefinir sua senha.
-      </p>
+    return (
+        <div className="auth-container">
+            <div className="card">
+                <h1 className="auth-title">Esqueci minha senha</h1>
+                <p style={{ marginBottom: '1rem', color: '#666' }}>
+                    Digite seu email e enviaremos um link para redefinir sua senha.
+                </p>
 
-      {success && <div className="alert alert-success">{success}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+                {message && <div className="alert alert-success">{message}</div>}
+                {error && <div className="alert alert-danger">{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoFocus
-          />
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <button type="submit" className="btn btn-block" disabled={loading}>
+                        {loading ? 'Enviando...' : 'Enviar link de redefinição'}
+                    </button>
+                </form>
+
+                <div className="auth-links">
+                    <p><Link to="/login">Voltar ao login</Link></p>
+                </div>
+            </div>
         </div>
-
-        <button type="submit" className="btn" style={{ width: '100%' }} disabled={loading}>
-          {loading ? 'Enviando...' : 'Enviar link de redefinição'}
-        </button>
-      </form>
-
-      <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <Link to="/login" className="link">Voltar ao login</Link>
-      </p>
-    </div>
-  );
+    );
 }
 
 export default ForgotPassword;
